@@ -31,15 +31,15 @@ resource "random_id" "random_suffix" {
 }
 
 # The resource group created with the init.sh script.
-data "azurerm_resource_group" "proxmox_rg" {
+data "azurerm_resource_group" "windows_hybrid" {
     name = var.resource_group_name
 }
 
 # Deploy the storage account to the existing resource group.
 resource "azurerm_storage_account" "storage_statefile" {
     name = "${var.storage_account_name}${random_id.random_suffix.hex}"
-    resource_group_name = data.azurerm_resource_group.proxmox_rg.name
-    location = data.azurerm_resource_group.proxmox_rg.location
+    resource_group_name = data.azurerm_resource_group.windows_hybrid.name
+    location = data.azurerm_resource_group.windows_hybrid.location
     account_tier = "Standard"
     account_replication_type = "LRS"
     
