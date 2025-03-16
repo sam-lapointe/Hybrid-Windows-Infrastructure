@@ -25,15 +25,15 @@ variable "description" {
 }
 
 variable "additional_vm_tags" {
-  description = "Additional tags for the VM. Allowed values: 'dc', 'primary', 'fs', 'wac', 'core', 'desktop'."
+  description = "Additional tags for the VM. Allowed values: 'dc', 'primary', 'fs', 'wac', 'sync', 'core', 'desktop'."
   type = list(string)
   default = []
 
   validation {
     condition = alltrue([
-        for tag in var.additional_vm_tags : contains(["dc", "primary", "fs", "wac", "core", "desktop"], tag)
+        for tag in var.additional_vm_tags : contains(["dc", "primary", "fs", "wac", "sync", "core", "desktop"], tag)
     ])
-    error_message = "Only 'dc', 'primary', 'fs', 'wac', 'core' and 'desktop' are allowed as additional tags."
+    error_message = "Only 'dc', 'primary', 'fs', 'wac', 'sync', 'core' and 'desktop' are allowed as additional tags."
   }
 }
 

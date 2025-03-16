@@ -3,17 +3,6 @@ variable "ubuntu_template_id" {
     type = number
 }
 
-variable "ubuntu_template_default_username" {
-    description = "The default's user username."
-    type = string
-}
-
-variable "ubuntu_template_default_password" {
-    description = "The default's user password."
-    type = string
-    sensitive = true
-}
-
 variable "proxmox_node" {
     description = "The name of the proxmox node where to deploy the VM."
     type = string

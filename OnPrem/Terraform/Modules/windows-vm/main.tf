@@ -59,24 +59,3 @@ resource "proxmox_virtual_environment_vm" "windows_vm" {
   #   prevent_destroy = true
   # }
 }
-
-# Depending on how this will be integrated with Ansible in the CI/CD, it might be best later to configure the VM name with Ansible.
-resource "null_resource" "rename_windows_vm" {
-  depends_on = [ proxmox_virtual_environment_vm.windows_vm ]
-
-  provisioner "remote-exec" {
-    # SSH connection settings to configure the VM hostname
-    connection {
-    type = "ssh"
-    user = "Administrator"
-    password = var.windows_template_default_password
-    host = proxmox_virtual_environment_vm.windows_vm.ipv4_addresses[0][0]
-    target_platform = "windows"
-  }
-
-    # Rename the Windows hostname
-    inline = [
-      "powershell -Command \"if ((Get-ComputerInfo).CsName -ne '${var.hostname}') {Rename-Computer -NewName '${var.hostname}' -Force -Restart}\""
-    ]
-  }  
-}

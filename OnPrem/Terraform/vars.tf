@@ -14,14 +14,3 @@ variable "windows_template_default_password" {
     type = string
     sensitive = true
 }
-
-variable "ubuntu_template_default_username" {
-    description = "The default's user username."
-    type = string
-}
-
-variable "ubuntu_template_default_password" {
-    description = "The default's user password."
-    type = string
-    sensitive = true
-}

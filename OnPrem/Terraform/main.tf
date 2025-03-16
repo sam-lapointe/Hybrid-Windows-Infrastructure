@@ -29,96 +29,82 @@ provider "proxmox" {
 # Currently, every modules need to be added here manually.
 locals {
   windows_vm_modules = [
-    module.win-dc-01,
-    module.win-dc-02,
-    module.win-fs-01,
-    module.win-ts-01
+    module.win-dc1-f1,
+    module.win-dc1-f2,
+    module.win-wac,
+    module.win-entra-sync1
   ]
-  ubuntu_vm_modules = [
-    module.ubnt-runner-01
-  ]
+  ubuntu_vm_modules = []
   # Combine both lists into a single list of modules
   all_vm_modules = concat(local.windows_vm_modules, local.ubuntu_vm_modules)
 }
 
-module "win-dc-01" {
+module "win-dc1-f1" {
   source = "./Modules/windows-vm"
 
   # Input Variables
-  hostname = "dc-01"
-  description = "Windows Domain Controller 01 - Managed by Terraform"
-  additional_vm_tags = ["dc", "primary"]
-  windows_template_id = 100
+  hostname = "dc1-f1"
+  description = "Windows Domain Controller 1 of Forest 1 - Managed by Terraform"
+  additional_vm_tags = ["dc", "primary", "core"]
+  windows_template_id = 101
   windows_template_default_password = var.windows_template_default_password
   proxmox_node = "node-01"
-  cpu = 2
-  memory = 4096
-}
-
-module "win-dc-02" {
-  source = "./Modules/windows-vm"
-
-  # Input Variables
-  hostname = "dc-02"
-  description = "Windows Domain Controller 02 - Managed by Terraform"
-  additional_vm_tags = ["dc"]
-  windows_template_id = 100
-  windows_template_default_password = var.windows_template_default_password
-  proxmox_node = "node-01"
-  cpu = 2
-  memory = 4096
-}
-
-module "win-fs-01" {
-  source = "./Modules/windows-vm"
-
-  # Input Variables
-  hostname = "fs-01"
-  description = "Windows File Server 01 - Managed by Terraform"
-  additional_vm_tags = ["fs"]
-  windows_template_id = 100
-  windows_template_default_password = var.windows_template_default_password
-  proxmox_node = "node-01"
-  cpu = 2
-  memory = 4096
+  cpu = 1
+  memory = 2048
   disks = [ {
     datastore_id = "DataStorage-01"
     interface = "scsi1"
     file_format = "raw"
-    size = 64
+    size = 8
   } ]
 }
 
-module "win-ts-01" {
+module "win-dc1-f2" {
   source = "./Modules/windows-vm"
 
   # Input Variables
-  hostname = "ts-01"
-  description = "Windows Terminal Server 01 - Managed by Terraform"
-  additional_vm_tags = ["ts"]
-  windows_template_id = 100
+  hostname = "dc1-f2"
+  description = "Windows Domain Controller 1 of Forest 2 - Managed by Terraform"
+  additional_vm_tags = ["dc", "primary", "core"]
+  windows_template_id = 101
+  windows_template_default_password = var.windows_template_default_password
+  proxmox_node = "node-01"
+  cpu = 1
+  memory = 2048
+  disks = [ {
+    datastore_id = "DataStorage-01"
+    interface = "scsi1"
+    file_format = "raw"
+    size = 8
+  }]
+}
+
+module "win-wac" {
+  source = "./Modules/windows-vm"
+
+  # Input Variables
+  hostname = "wac"
+  description = "Windows Admin Center - Managed by Terraform"
+  additional_vm_tags = ["wac", "core"]
+  windows_template_id = 101
   windows_template_default_password = var.windows_template_default_password
   proxmox_node = "node-01"
   cpu = 2
   memory = 4096
 }
 
-module "ubnt-runner-01" {
-  source = "./Modules/ubuntu-vm"
+module "win-entra-sync1" {
+    source = "./Modules/windows-vm"
 
-  # Input Variables
-  hostname = "runner-01"
-  description = "Ubuntu 22.04 Server hosting GitHub Actions Self-Hosted Runners - Managed by Terraform"
-  additional_vm_tags = ["github-runner"]
-  ubuntu_template_id = 104
-  ubuntu_template_default_username = var.ubuntu_template_default_username
-  ubuntu_template_default_password = var.ubuntu_template_default_password
-  proxmox_node = "node-01"
-  cpu = 2
-  memory = 4096
-
-  # Only 1 template can be cloned at a time because Proxmox is applying a lock on the storage account that prevents the cloning of a different template.
-  depends_on = [ local.windows_vm_modules ]
+    # Input Variables
+    hostname = "entra-sync1"
+    description = "Windows with Entra Connect for Synchronization- Managed by Terraform"
+    additional_vm_tags = ["sync", "desktop"]
+    windows_template_id = 100
+    windows_template_default_password = var.windows_template_default_password
+    proxmox_node = "node-01"
+    cpu = 2
+    memory = 4096
 }
 
 output "all_vm_info" {
