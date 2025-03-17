@@ -46,6 +46,11 @@ jobs:
         sudo apt-get install -y nodejs
         node -v
 
+    - name: Install Unzip
+      run: |
+        sudo apt install unzip
+        unzip -v
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
