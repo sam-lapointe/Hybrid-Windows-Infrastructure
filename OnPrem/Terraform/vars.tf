@@ -1,9 +1,9 @@
-variable "PROXMOX_USERNAME" {
+variable "proxmox_username" {
   description = "Proxmox Username."
   type        = string
 }
 
-variable "PROXMOX_PASSWORD" {
+variable "proxmox_password" {
   description = "Proxmox User's Password"
   type        = string
   sensitive   = true
