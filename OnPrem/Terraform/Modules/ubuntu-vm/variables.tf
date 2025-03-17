@@ -18,6 +18,23 @@ variable "description" {
   type = string
 }
 
+variable "ubuntu_template_default_username" {
+    description = "The default's user username."
+    type = string
+}
+
+variable "ubuntu_template_default_ssh_privatekey" {
+    description = "The default's user password."
+    type = string
+    sensitive = true
+}
+
+variable "github_actions_token" {
+  description = "The token to link the runner to the repository."
+  type = string
+  sensitive = true
+}
+
 variable "additional_vm_tags" {
   description = "Additional tags for the VM. Allowed values: 'github-runner'."
   type = list(string)

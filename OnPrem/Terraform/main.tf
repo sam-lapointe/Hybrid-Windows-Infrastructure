@@ -1,7 +1,7 @@
 terraform {
   backend "azurerm" {
       resource_group_name = "WindowsHybrid"
-      storage_account_name = "winhybrid78cd8e59" # Replace this with your storage account name.
+      storage_account_name = "winhybride8be15f7" # Replace this with your storage account name.
       container_name = "tfstate"
       key = "onprem.terraform.tfstate"
       use_azuread_auth = true
