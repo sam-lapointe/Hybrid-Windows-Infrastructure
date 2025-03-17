@@ -47,7 +47,6 @@ module "win-dc1-f1" {
   description = "Windows Domain Controller 1 of Forest 1 - Managed by Terraform"
   additional_vm_tags = ["dc", "primary", "core"]
   windows_template_id = 101
-  windows_template_default_password = var.windows_template_default_password
   proxmox_node = "node-01"
   cpu = 1
   memory = 2048
@@ -67,7 +66,6 @@ module "win-dc1-f2" {
   description = "Windows Domain Controller 1 of Forest 2 - Managed by Terraform"
   additional_vm_tags = ["dc", "primary", "core"]
   windows_template_id = 101
-  windows_template_default_password = var.windows_template_default_password
   proxmox_node = "node-01"
   cpu = 1
   memory = 2048
@@ -87,7 +85,6 @@ module "win-wac" {
   description = "Windows Admin Center - Managed by Terraform"
   additional_vm_tags = ["wac", "core"]
   windows_template_id = 101
-  windows_template_default_password = var.windows_template_default_password
   proxmox_node = "node-01"
   cpu = 2
   memory = 4096
@@ -101,7 +98,6 @@ module "win-entra-sync1" {
     description = "Windows with Entra Connect for Synchronization- Managed by Terraform"
     additional_vm_tags = ["sync", "desktop"]
     windows_template_id = 100
-    windows_template_default_password = var.windows_template_default_password
     proxmox_node = "node-01"
     cpu = 2
     memory = 4096

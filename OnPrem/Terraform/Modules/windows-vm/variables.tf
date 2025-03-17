@@ -3,12 +3,6 @@ variable "windows_template_id" {
     type = number
 }
 
-variable "windows_template_default_password" {
-    description = "The default password of the user Administrator."
-    type = string
-    sensitive = true
-}
-
 variable "proxmox_node" {
     description = "The name of the proxmox node where to deploy the VM."
     type = string
