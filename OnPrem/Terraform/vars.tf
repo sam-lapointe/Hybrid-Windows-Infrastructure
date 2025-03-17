@@ -1,16 +1,10 @@
-variable "proxmox_username" {
+variable "PROXMOX_USERNAME" {
   description = "Proxmox Username."
-  type = string
+  type        = string
 }
 
-variable "proxmox_password" {
-    description = "Proxmox User's Password"
-    type = string
-    sensitive = true
-}
-
-variable "windows_template_default_password" {
-    description = "The default password of the user Administrator."
-    type = string
-    sensitive = true
+variable "PROXMOX_PASSWORD" {
+  description = "Proxmox User's Password"
+  type        = string
+  sensitive   = true
 }

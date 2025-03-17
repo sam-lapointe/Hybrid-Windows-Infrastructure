@@ -1,19 +1,19 @@
 terraform {
   backend "azurerm" {
-      resource_group_name = "WindowsHybrid"
-      storage_account_name = "winhybride8be15f7" # Replace this with your storage account name.
-      container_name = "tfstate"
-      key = "onprem.terraform.tfstate"
-      use_azuread_auth = true
-    }
+    resource_group_name  = "WindowsHybrid"
+    storage_account_name = "winhybride8be15f7" # Replace this with your storage account name.
+    container_name       = "tfstate"
+    key                  = "onprem.terraform.tfstate"
+    use_azuread_auth     = true
+  }
 
-    required_providers {
+  required_providers {
     azurerm = {
-        source = "hashicorp/azurerm"
-        version = "4.17.0"
+      source  = "hashicorp/azurerm"
+      version = "4.17.0"
     }
     proxmox = {
-      source = "bpg/proxmox"
+      source  = "bpg/proxmox"
       version = "0.73.1"
     }
   }
@@ -21,8 +21,8 @@ terraform {
 
 provider "proxmox" {
   endpoint = "https://192.168.0.11:8006/"
-  username = var.proxmox_username
-  password = var.proxmox_password
+  username = var.PROXMOX_USERNAME
+  password = var.PROXMOX_PASSWORD
   insecure = true
 }
 
@@ -43,37 +43,37 @@ module "win-dc1-f1" {
   source = "./Modules/windows-vm"
 
   # Input Variables
-  hostname = "dc1-f1"
-  description = "Windows Domain Controller 1 of Forest 1 - Managed by Terraform"
-  additional_vm_tags = ["dc", "primary", "core"]
+  hostname            = "dc1-f1"
+  description         = "Windows Domain Controller 1 of Forest 1 - Managed by Terraform"
+  additional_vm_tags  = ["dc", "primary", "core"]
   windows_template_id = 101
-  proxmox_node = "node-01"
-  cpu = 1
-  memory = 2048
-  disks = [ {
+  proxmox_node        = "node-01"
+  cpu                 = 1
+  memory              = 2048
+  disks = [{
     datastore_id = "DataStorage-01"
-    interface = "scsi1"
-    file_format = "raw"
-    size = 8
-  } ]
+    interface    = "scsi1"
+    file_format  = "raw"
+    size         = 8
+  }]
 }
 
 module "win-dc1-f2" {
   source = "./Modules/windows-vm"
 
   # Input Variables
-  hostname = "dc1-f2"
-  description = "Windows Domain Controller 1 of Forest 2 - Managed by Terraform"
-  additional_vm_tags = ["dc", "primary", "core"]
+  hostname            = "dc1-f2"
+  description         = "Windows Domain Controller 1 of Forest 2 - Managed by Terraform"
+  additional_vm_tags  = ["dc", "primary", "core"]
   windows_template_id = 101
-  proxmox_node = "node-01"
-  cpu = 1
-  memory = 2048
-  disks = [ {
+  proxmox_node        = "node-01"
+  cpu                 = 1
+  memory              = 2048
+  disks = [{
     datastore_id = "DataStorage-01"
-    interface = "scsi1"
-    file_format = "raw"
-    size = 8
+    interface    = "scsi1"
+    file_format  = "raw"
+    size         = 8
   }]
 }
 
@@ -81,26 +81,26 @@ module "win-wac" {
   source = "./Modules/windows-vm"
 
   # Input Variables
-  hostname = "wac"
-  description = "Windows Admin Center - Managed by Terraform"
-  additional_vm_tags = ["wac", "core"]
+  hostname            = "wac"
+  description         = "Windows Admin Center - Managed by Terraform"
+  additional_vm_tags  = ["wac", "core"]
   windows_template_id = 101
-  proxmox_node = "node-01"
-  cpu = 2
-  memory = 4096
+  proxmox_node        = "node-01"
+  cpu                 = 2
+  memory              = 4096
 }
 
 module "win-entra-sync1" {
-    source = "./Modules/windows-vm"
+  source = "./Modules/windows-vm"
 
-    # Input Variables
-    hostname = "entra-sync1"
-    description = "Windows with Entra Connect for Synchronization- Managed by Terraform"
-    additional_vm_tags = ["sync", "desktop"]
-    windows_template_id = 100
-    proxmox_node = "node-01"
-    cpu = 2
-    memory = 4096
+  # Input Variables
+  hostname            = "entra-sync1"
+  description         = "Windows with Entra Connect for Synchronization- Managed by Terraform"
+  additional_vm_tags  = ["sync", "desktop"]
+  windows_template_id = 100
+  proxmox_node        = "node-01"
+  cpu                 = 2
+  memory              = 4096
 }
 
 output "all_vm_info" {
