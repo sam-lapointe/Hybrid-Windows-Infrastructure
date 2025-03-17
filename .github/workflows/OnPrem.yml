@@ -32,6 +32,7 @@ jobs:
     defaults:
       run:
         shell: bash
+        working-directory: ./OnPrem/Terraform
     
     steps:
     # Checkout the repository to the GitHub Actions runner
