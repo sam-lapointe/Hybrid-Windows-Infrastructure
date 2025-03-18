@@ -112,11 +112,11 @@ module "win-entra-sync1" {
 resource "local_file" "hosts_cfg" {
   content = templatefile("inventory.tmpl",
     {
-      primary_domain_controllers   = [for host in local.all_vms : host if contains(host.tags, "dc") && contains(host.tags, "primary")]
-      secondary_domain_controllers = [for host in local.all_vms : host if contains(host.tags, "dc") && !contains(host.tags, "primary")]
-      windows_admin_center         = [for host in local.all_vms : host if contains(host.tags, "wac")]
-      file_servers                 = [for host in local.all_vms : host if contains(host.tags, "fs")]
-      entra_sync_servers           = [for host in local.all_vms : host if contains(host.tags, "sync")]
+      primary_domain_controllers   = [for host in local.all_vms : host if contains(host.vm_tags, "dc") && contains(host.vm_tags, "primary")]
+      secondary_domain_controllers = [for host in local.all_vms : host if contains(host.vm_tags, "dc") && !contains(host.vm_tags, "primary")]
+      windows_admin_center         = [for host in local.all_vms : host if contains(host.vm_tags, "wac")]
+      file_servers                 = [for host in local.all_vms : host if contains(host.vm_tags, "fs")]
+      entra_sync_servers           = [for host in local.all_vms : host if contains(host.vm_tags, "sync")]
     }
   )
   filename = "./inventory"
