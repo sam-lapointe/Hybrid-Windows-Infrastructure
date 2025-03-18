@@ -1,0 +1,162 @@
+---
+# tasks file for baseline_windows
+- name: Verify if SSH DefaultShell is configured
+  ansible.windows.win_command: reg query "HKLM\Software\OpenSSH" /v "DefaultShell"
+  register: default_shell_output
+  changed_when: default_shell_output.rc != 0
+  failed_when:
+    - default_shell_output.rc != 0
+    - default_shell_output.module_stderr.splitlines()[-1] != "ERROR: The system was unable to find the specified registry key or value." # This error is happening when Ansible is using CMD and the DefaultShell is not configured on the host.
+    - default_shell_output.module_stderr.splitlines()[-1] != "Parameter format not correct - ;" # This error is due to Ansible not using the same Shell as the default one on the host.
+  tags:
+    - ssh
+
+- name: Configure the SSH DefaultShell if it is not
+  when: default_shell_output.rc != 0
+  tags:
+    - ssh
+  block:
+    - name: Set ansible_shell_type to CMD if DefaultShell is not configured
+      ansible.builtin.set_fact:
+        ansible_shell_type: "cmd"
+
+    - name: Set SSH Shell to be PowerShell
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\OpenSSH
+        name: DefaultShell
+        data: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+        type: string
+        state: present
+      register: ssh_shell_updated
+
+    # This does not support when conditional. Tried restarting the sshd service but the session persist, this is currently the best solution.
+    - name: Reset SSH connection after shell change
+      ansible.builtin.meta: reset_connection
+
+    - name: Set ansible_shell_type to PowerShell if DefaultShell was not configured
+      ansible.builtin.set_fact:
+        ansible_shell_type: "powershell"
+
+- name: Copy the SSH public key to the authorized_keys file
+  ansible.windows.win_copy:
+    src: authorized_keys
+    dest: C:\ProgramData\ssh\administrators_authorized_keys
+    force: true
+  tags:
+    - ssh
+
+- name: Disable SSH Password Authentication
+  community.windows.win_lineinfile:
+    path: C:\ProgramData\ssh\sshd_config
+    regex: '^#?PasswordAuthentication\s+.*'
+    line: "PasswordAuthentication no"
+    state: present
+  register: ssh_config_updated
+  tags:
+    - ssh
+
+- name: Restart SSH service if config was updated
+  ansible.windows.win_service:
+    name: sshd
+    state: restarted
+  when: ssh_config_updated.changed
+  tags:
+    - ssh
+
+- name: Verify the Winodws Installation Type
+  ansible.windows.win_shell: "Get-ItemProperty -Path 'HKLM:/Software/Microsoft/Windows NT/CurrentVersion' | Select-Object -ExpandProperty 'InstallationType'"
+  register: win_installation_type
+  changed_when: false
+
+- name: Enable RDP if Windows Server Core
+  when: (win_installation_type.stdout | trim) == "Server"
+  tags:
+    - rdp
+  block:
+    - name: Enable RDP in the Windows registry
+      ansible.windows.win_regedit:
+        path: "HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server"
+        name: fDenyTSConnections
+        data: 0
+        type: dword
+      tags: rdp
+
+    - name: Allow RDP through Windows Defender Firewall
+      community.windows.win_firewall_rule:
+        name: "{{ item }}"
+        enabled: True
+      loop:
+        - Remote Desktop - User Mode (TCP-In)
+        - Remote Desktop - User Mode (UDP-In)
+        - Remote Desktop - Shadow (TCP-In)
+      tags:
+        - firewall
+        - rdp
+
+- name: Store domain controller IPs in a list
+  ansible.builtin.set_fact:
+    dc_ips: >-
+      {{
+        (['127.0.0.1'] +
+        (groups['domain_controllers']
+          | map('extract', hostvars, ['ansible_host'])
+          | reject('equalto', ansible_host)
+          | list)
+        )
+      }}
+    member_ips: "{{ groups['domain_controllers'] | map('extract', hostvars, ['ansible_host']) | list }}"
+  register: dns_list
+  tags:
+    - dns
+
+- name: Verify if DNS is already configured
+  vars:
+    dns_script: |
+      $dns = (Get-DNSClientServerAddress -InterfaceAlias "Ethernet" -AddressFamily IPv4).ServerAddresses
+      if ($dns.Count -eq 1) {$dns = "[`"$dns`"]"} else {$dns = $dns | ConvertTo-Json} # Ensure it's always an array
+      $dns
+  ansible.windows.win_shell: "{{ dns_script }}"
+  register: dns_configured
+  changed_when: (dns_configured.stdout | from_json) != dc_ips and (dns_configured.stdout | from_json) != member_ips
+  tags: dns
+
+- name: Configure DNS on Domain Controllers
+  ansible.windows.win_dns_client:
+    adapter_names:
+      - Ethernet
+    ipv4_addresses: "{{ dc_ips }}"
+  tags:
+    - dns
+  when:
+    - dns_configured.changed
+    - inventory_hostname in groups['domain_controllers']
+
+- name: Configure DNS on Domain Members
+  ansible.windows.win_dns_client:
+    adapter_names:
+      - Ethernet
+    ipv4_addresses: "{{ member_ips }}"
+  tags:
+    - dns
+  when:
+    - dns_configured.changed
+    - inventory_hostname not in groups['domain_controllers']
+
+- name: Set Time Zone to Eastern Standard Time
+  community.windows.win_timezone:
+    timezone: Eastern Standard Time
+  tags:
+    - timezone
+
+- name: Join host to domain and change hostname
+  microsoft.ad.membership:
+    dns_domain_name: lab.local
+    hostname: "{{ inventory_hostname }}"
+    domain_admin_user: "{{ domain_admin_username }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+    domain_ou_path: "OU=Computers,OU=ProxmoxBCDR,DC=lab,DC=local"
+    state: domain
+    reboot: True
+  when: inventory_hostname not in groups['domain_controllers']
+  tags:
+    - join_domain
