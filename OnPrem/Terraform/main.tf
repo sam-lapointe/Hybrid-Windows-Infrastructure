@@ -57,7 +57,7 @@ module "win-dc1-f1" {
     datastore_id = "DataStorage-01"
     interface    = "scsi1"
     file_format  = "raw"
-    size         = 8
+    size         = 16
   }]
 }
 
@@ -77,7 +77,7 @@ module "win-dc1-f2" {
     datastore_id = "DataStorage-01"
     interface    = "scsi1"
     file_format  = "raw"
-    size         = 8
+    size         = 16
   }]
 }
 

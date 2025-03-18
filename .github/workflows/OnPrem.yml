@@ -131,7 +131,7 @@ jobs:
     - name: Terraform Apply
       id: apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      run: terraform apply -auto-approve -input=false -parallelism=3
     
     # Add the status=new to each new hosts in the inventory file
     - name: Adjust Ansible Inventory
