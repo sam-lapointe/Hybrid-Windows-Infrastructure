@@ -12,7 +12,7 @@ terraform {
 }
 
 locals {
-  required_tags = ["terraform", "windows"]
+  required_tags = ["terraform", "windows", var.domain]
   final_tags = concat(local.required_tags, var.additional_vm_tags)
 }
 

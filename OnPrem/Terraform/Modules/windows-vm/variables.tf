@@ -18,6 +18,20 @@ variable "description" {
   type = string
 }
 
+variable "domain" {
+    description = "The domain the VM needs to join (e.g., example.com). Either WORKGORUP or a valid domain name."
+    type = string
+    default = "WORKGROUP"
+
+    validation {
+      condition = (
+        var.domain == "WORKGROUP" ||
+        (can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{1,62}[A-Za-z0-9]\\.)+[A-Za-z]{2,}$", var.domain)) && length(var.domain) <= 64)
+      )
+      error_message = "The domain must be either 'WORKGROUP' or a valid domain name (e.g., example.com) with a maximum total length of 64 characters."
+    }
+}
+
 variable "additional_vm_tags" {
   description = "Additional tags for the VM. Allowed values: 'dc', 'primary', 'fs', 'wac', 'sync', 'core', 'desktop'."
   type = list(string)

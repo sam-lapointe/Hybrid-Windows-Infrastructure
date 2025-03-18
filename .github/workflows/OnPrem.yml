@@ -52,6 +52,11 @@ jobs:
         sudo apt install unzip
         unzip -v
 
+    - name: Install Ansible
+      run: |
+        sudo apt update
+        sudo apt install -y ansible
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
@@ -75,8 +80,12 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       id: plan
-      run: terraform plan -no-color -input=false
+      run: terraform plan -no-color -input=false -out=tfplan
       continue-on-error: true
+
+    # Convert the tfplan to a json format
+    - name: Convert tfplan
+      run: terraform show -json tfplan > tfplan.json
 
     - uses: actions/github-script@v7
       if: github.event_name == 'pull_request'
@@ -120,5 +129,11 @@ jobs:
       run: exit 1
 
     - name: Terraform Apply
+      id: apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false
+
+    - name: Test Inventory
+      run: |
+        ls
+        cat ./inventory

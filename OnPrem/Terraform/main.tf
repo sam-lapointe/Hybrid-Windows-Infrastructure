@@ -37,6 +37,10 @@ locals {
   ubuntu_vm_modules = []
   # Combine both lists into a single list of modules
   all_vm_modules = concat(local.windows_vm_modules, local.ubuntu_vm_modules)
+
+  all_vm_info = [
+    for vm_module in all_vm_modules : vm_module.vm_info
+  ]
 }
 
 module "win-dc1-f1" {
@@ -45,6 +49,7 @@ module "win-dc1-f1" {
   # Input Variables
   hostname            = "dc1-f1"
   description         = "Windows Domain Controller 1 of Forest 1 - Managed by Terraform"
+  domain              = "slapointe.com"
   additional_vm_tags  = ["dc", "primary", "core"]
   windows_template_id = 101
   proxmox_node        = "node-01"
@@ -64,6 +69,7 @@ module "win-dc1-f2" {
   # Input Variables
   hostname            = "dc1-f2"
   description         = "Windows Domain Controller 1 of Forest 2 - Managed by Terraform"
+  domain              = "lab.local"
   additional_vm_tags  = ["dc", "primary", "core"]
   windows_template_id = 101
   proxmox_node        = "node-01"
@@ -83,6 +89,7 @@ module "win-wac" {
   # Input Variables
   hostname            = "wac"
   description         = "Windows Admin Center - Managed by Terraform"
+  domain              = "slapointe.com"
   additional_vm_tags  = ["wac", "core"]
   windows_template_id = 101
   proxmox_node        = "node-01"
@@ -96,6 +103,7 @@ module "win-entra-sync1" {
   # Input Variables
   hostname            = "entra-sync1"
   description         = "Windows with Entra Connect for Synchronization- Managed by Terraform"
+  domain              = "slapointe.com"
   additional_vm_tags  = ["sync", "desktop"]
   windows_template_id = 100
   proxmox_node        = "node-01"
@@ -103,8 +111,16 @@ module "win-entra-sync1" {
   memory              = 4096
 }
 
+resource "local_file" "hosts_cfg" {
+  content = templatefile("inventory.tmpl",
+    {
+      hosts = local.all_vm_info
+    }
+  )
+  filename = "./inventory"
+  depends_on = [ local.all_vm_info ]
+}
+
 output "all_vm_info" {
-  value = [
-    for vm_module in local.all_vm_modules : vm_module.vm_info
-  ]
+  value = all_vm_info
 }

@@ -1,0 +1,28 @@
+[primary_domain_controllers]
+%{ for vm in  hosts ~}
+${hostname}
+%{ endfor ~}
+
+[secondary_domain_controllers]
+
+
+[windows_admin_center]
+
+
+[file_servers]
+
+
+[entra_sync_servers]
+
+
+[windows:children]
+primary_domain_controllers
+secondary_domain_controllers
+windows_admin_center
+file_servers
+entra_sync_servers
+
+[windows:vars]
+remote_tmp=C:\Temp
+ansible_connection=ssh
+ansible_shell_type=powershell
