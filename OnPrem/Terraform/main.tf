@@ -117,8 +117,8 @@ resource "local_file" "hosts_cfg" {
       hosts = local.all_vm_info
     }
   )
-  filename = "./inventory"
-  depends_on = [ local.all_vm_info ]
+  filename   = "./inventory"
+  depends_on = [local.all_vm_info]
 }
 
 output "all_vm_info" {
