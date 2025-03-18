@@ -1,6 +1,6 @@
 [primary_domain_controllers]
 %{ for vm in  hosts ~}
-${hostname}
+${vm.hostname}
 %{ endfor ~}
 
 [secondary_domain_controllers]
