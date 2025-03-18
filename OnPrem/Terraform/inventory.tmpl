@@ -1,19 +1,27 @@
 [primary_domain_controllers]
-%{ for vm in  hosts ~}
-${vm.hostname}
+%{ for vm in  primary_domain_controllers ~}
+${ vm.hostname } ansible_host=${ vm.ipv4_address } domain=${ vm.domain }
 %{ endfor ~}
 
 [secondary_domain_controllers]
-
+%{ for vm in  secondary_domain_controllers ~}
+${ vm.hostname } ansible_host=${ vm.ipv4_address } domain=${ vm.domain }
+%{ endfor ~}
 
 [windows_admin_center]
-
+%{ for vm in  windows_admin_center ~}
+${ vm.hostname } ansible_host=${ vm.ipv4_address } domain=${ vm.domain }
+%{ endfor ~}
 
 [file_servers]
-
+%{ for vm in  file_servers ~}
+${ vm.hostname } ansible_host=${ vm.ipv4_address } domain=${ vm.domain }
+%{ endfor ~}
 
 [entra_sync_servers]
-
+%{ for vm in  entra_sync_servers ~}
+${ vm.hostname } ansible_host=${ vm.ipv4_address } domain=${ vm.domain }
+%{ endfor ~}
 
 [windows:children]
 primary_domain_controllers

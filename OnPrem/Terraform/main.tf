@@ -37,6 +37,8 @@ locals {
   ubuntu_vm_modules = []
   # Combine both lists into a single list of modules
   all_vm_modules = concat(local.windows_vm_modules, local.ubuntu_vm_modules)
+
+  all_vms = [for vm_module in local.all_vm_modules : vm_module.vm_info]
 }
 
 module "win-dc1-f1" {
@@ -110,16 +112,16 @@ module "win-entra-sync1" {
 resource "local_file" "hosts_cfg" {
   content = templatefile("inventory.tmpl",
     {
-      hosts = [
-        for vm_module in local.all_vm_modules : vm_module.vm_info
-      ]
+      primary_domain_controllers   = [for host in local.all_vms : host if contains(host.tags, "dc") && contains(host.tags, "primary")]
+      secondary_domain_controllers = [for host in local.all_vms : host if contains(host.tags, "dc") && !contains(host.tags, "primary")]
+      windows_admin_center         = [for host in local.all_vms : host if contains(host.tags, "wac")]
+      file_servers                 = [for host in local.all_vms : host if contains(host.tags, "fs")]
+      entra_sync_servers           = [for host in local.all_vms : host if contains(host.tags, "sync")]
     }
   )
   filename = "./inventory"
 }
 
 output "all_vm_info" {
-  value = [
-    for vm_module in local.all_vm_modules : vm_module.vm_info
-  ]
+  value = local.all_vms
 }
