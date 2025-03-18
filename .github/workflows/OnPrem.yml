@@ -52,6 +52,10 @@ jobs:
         sudo apt install unzip
         unzip -v
 
+    - name: Install jq
+      run: |
+       sudo apt install -y jq
+
     - name: Install Ansible
       run: |
         sudo apt update
