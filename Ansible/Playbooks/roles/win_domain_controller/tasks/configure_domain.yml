@@ -1,0 +1,111 @@
+---
+# TO DO: Setup the OUs for each domain and adjust the path for LAPS and the GPO.
+- name: Create ProxmoxBCDR OU
+  microsoft.ad.ou:
+    name: ProxmoxBCDR
+    state: present
+
+- name: Create Computers OU in ProxmoxBCDR
+  microsoft.ad.ou:
+    name: Computers
+    path: OU=ProxmoxBCDR,DC=lab,DC=local
+    state: present
+
+- name: Verify if AD Recycle Bin is enabled
+  vars:
+    verify_bin: |
+      $bin = (Get-ADOptionalFeature -Filter 'Name -like "Recycle Bin Feature"').EnabledScopes | ConvertTo-Json
+      if ($null -eq $bin) {return $false} else {return $true}
+  ansible.windows.win_shell: "{{ verify_bin }}"
+  register: is_adbin_enabled
+  changed_when: (is_adbin_enabled.stdout | trim) == "False"
+
+- name: Enable AD Recycle Bin if not enabled
+  ansible.windows.win_shell: Enable-AdOptionalFeature 'Recycle Bin Feature' -Scope ForestOrConfigurationSet -Target lab.local -Confirm:$false
+  when: is_adbin_enabled.changed
+
+- name: Verify if LAPS schema is present
+  vars:
+    verify_laps: |
+      $laps = Get-ADObject -Filter {name -like "ms-LAPS-*" } -SearchBase (Get-ADRootDSE).schemaNamingContext -Properties name
+      if ($null -eq $laps) {return $false} else {return $true}
+  ansible.windows.win_shell: "{{ verify_laps }}"
+  register: is_laps_schema_present
+  changed_when: (is_laps_schema_present.stdout | trim) == "False"
+
+- name: Update Laps AD Schema and Set Computer Self Permission
+  ansible.windows.win_shell: |
+    Update-LapsADSchema -Confirm:$false
+    Set-LapsADComputerSelfPermission -Identity "OU=Computers,OU=ProxmoxBCDR,DC=lab,DC=local"
+  become: True
+  become_method: runas
+  become_user: Administrator
+  when: is_laps_schema_present.changed
+
+- name: Create the GPO for LAPS
+  vars:
+    create_gpo: |
+      $gpo_name = "LAPS"
+      $ou = "OU=Computers,OU=ProxmoxBCDR,DC=lab,DC=local"
+      if (-not (Get-GPO -Name $gpo_name -ErrorAction SilentlyContinue)) {
+          New-GPO -Name $gpo_name | Out-Null
+          New-GPLink -Name $gpo_name -Target $ou -LinkEnabled Yes | Out-Null
+          return $true
+      } else {
+          $ou_link = (Get-GPInheritance -Target $ou).GpoLinks | Where-Object {$_.DisplayName -eq $gpo_name}
+          if ($ou_link.Count -eq 1 -and $ou_link.Enabled -eq $true) {
+              return $false
+          } elseif ($ou_link.Count -eq 0) {
+              New-GPLink -Name $gpo_name -Target $ou -LinkEnabled Yes | Out-Null
+              return $true
+          } elseif ($ou_link.Enabled -eq $false) {
+              Set-GPLink -Name $gpo_name -Target $ou -LinkEnabled Yes | Out-Null
+              return $true
+          }
+      }
+  ansible.windows.win_shell: "{{ create_gpo }}"
+  register: is_gpo_changed
+  changed_when: (is_gpo_changed.stdout | trim) == "True"
+
+- name: Configure the Group Policies for LAPS
+  vars:
+    configure_gpo: |
+      $gpo_name = "LAPS"
+
+      # Define required registry settings in the GPO
+      $LAPSRegistryPath = "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\LAPS"
+      $RequiredKeys = @{
+          "ADPasswordEncryptionEnabled" = 1
+          "BackupDirectory" = 2
+          "PostAuthenticationResetDelay" = 8
+          "PostAuthenticationActions" = 3
+      }
+
+      # Get existing registry settings in the GPO
+      $ExistingKeys = Get-GPRegistryValue -Name $gpo_name -Key $LAPSRegistryPath -ErrorAction SilentlyContinue
+
+      $changed = $false
+
+      # Remove any extra keys not in the required list
+      if ($ExistingKeys) {
+          foreach ($Key in $ExistingKeys.ValueName) {
+              if (-not $RequiredKeys.ContainsKey($Key)) {
+                  Remove-GPRegistryValue -Name $gpo_name -Key $LAPSRegistryPath -ValueName $Key | Out-Null
+                  $changed = $true
+              }
+          }
+      }
+
+      # Ensure required keys exist with correct values
+      foreach ($Key in $RequiredKeys.Keys) {
+          $CurrentValue = (Get-GPRegistryValue -Name $gpo_name -Key $LAPSRegistryPath -ValueName $Key -ErrorAction SilentlyContinue).Value
+          if ($CurrentValue -ne $RequiredKeys[$Key]) {
+              Set-GPRegistryValue -Name $gpo_name -Key $LAPSRegistryPath -ValueName $Key -Type DWord -Value $RequiredKeys[$Key] | Out-Null
+              $changed = $true
+          }
+      }
+      return $changed
+  ansible.windows.win_shell: "{{ configure_gpo }}"
+  register: is_config_changed
+  changed_when: (is_config_changed.stdout | trim) == "True"
+...

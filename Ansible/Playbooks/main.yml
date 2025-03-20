@@ -1,0 +1,110 @@
+---
+- name: Set new servers groups
+  hosts: localhost
+  gather_facts: false
+  tasks: 
+    - name: Lists
+      ansible.builtin.set_fact:
+        new_dcs: >-
+          {{
+            (groups['primary_domain_controllers'] | default([]))
+              | union(groups['secondary_domain_controllers'] | default([]))
+              | map('extract', hostvars)
+              | selectattr('new', 'equalto', 'true')
+              | list
+          }}
+        new_members: >- 
+          {{ 
+            (groups['windows'] | default([]))
+              | difference(groups['primary_domain_controllers'] | default([])) 
+              | difference(groups['secondary_domain_controllers'] | default([])) 
+              | map('extract', hostvars)
+              | selectattr('new', 'equalto', 'true')
+              | list
+          }}
+    
+    - name: Add domain controllers with new=true to a dynamic group
+      ansible.builtin.add_host:
+        hostname: "{{ item.inventory_hostname }}"
+        ansible_host: "{{ item.ansible_host }}"
+        domain: "{{ item.domain }}"
+        groups: new_domain_controllers
+      loop: "{{ new_dcs }}"
+      changed_when: false
+
+    - name: Add members with new=true to a dynamic group
+      add_host:
+        hostname: "{{ item.inventory_hostname }}"
+        ansible_host: "{{ item.ansible_host }}"
+        domain: "{{ item.domain }}"
+        groups: new_members
+      loop: "{{ new_members }}"
+      changed_when: false
+
+- name: Set domain credentials dynamically
+  hosts: windows
+  gather_facts: false
+  tasks:
+    - name: Define credentials for every domain
+      set_fact:
+        domain_credentials:
+          slapointe.com:
+            username: "{{ (lookup('env', 'SLAPOINTE_DOM_ADMIN_USERNAME')) }}"
+            password: "{{  (lookup('env', 'SLAPOINTE_DOM_ADMIN_PASSWORD')) }}"
+            dsrm: "{{ (lookup('env', 'SLAPOINTE_DSRM')) }}"
+          lab.local:
+            username: "{{ (lookup('env', 'LAB_DOM_ADMIN_USERNAME')) }}"
+            password: "{{ (lookup('env', 'LAB_DOM_ADMIN_PASSWORD')) }}"
+            dsrm: "{{  (lookup('env', 'LAB_DSRM')) }}"
+
+    - name: Assign domain credentials
+      set_fact:
+        domain_admin_username: "{{ domain_credentials[domain].username }}"
+        domain_admin_password: "{{ domain_credentials[domain].password }}"
+        domain_dsrm: "{{ domain_credentials[domain].dsrm }}"
+
+- name: Set ansible_user based on domain
+  hosts: windows:!new_domain_controllers:!new_members
+  gather_facts: false
+  tasks:
+    - name: Set ansible_user based on domain
+      set_fact:
+        ansible_user: "{{ domain_admin_username }}"
+
+- name: Set ansible_user and ansible_password for new servers
+  hosts: new_domain_controllers,new_members
+  gather_facts: false
+  tasks:
+    - name: Set ansible_user and ansible_password
+      set_fact:
+        ansible_user: "{{  (lookup('env', 'DEFAULT_WIN_USERNAME')) }}"
+        ansible_password: "{{ (lookup('env', 'DEFAULT_WIN_PASSWORD')) }}"
+
+- name: Setup New Domain Controllers
+  hosts: new_domain_controllers
+  gather_facts: false
+  vars:
+    setup: true
+  roles:
+    - win_baseline
+    - win_domain_controller
+
+- name: Configure Existing Domain Controllers
+  hosts: primary_domain_controllers,secondary_domain_controllers
+  gather_facts: false
+  roles:
+    - win_baseline
+    - win_domain_controller
+
+- name: Setup New Members
+  hosts: new_members
+  gather_facts: false
+  roles:
+    - win_baseline
+
+- name: Configure Existing Members
+  hosts: windows:!primary_domain_controllers:!secondary_domain_controllers:!new_members
+  gather_facts: false
+  roles:
+    - win_baseline
+  

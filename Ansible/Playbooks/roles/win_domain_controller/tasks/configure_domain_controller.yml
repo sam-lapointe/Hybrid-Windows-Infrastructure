@@ -1,0 +1,41 @@
+---
+- name: Join host to domain and change hostname
+  microsoft.ad.membership:
+    dns_domain_name: "{{ domain }}"
+    hostname: "{{ inventory_hostname }}"
+    domain_admin_user: "{{ domain_admin_username }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+    state: domain
+    reboot: True
+  when:
+    - inventory_hostname in groups['secondary_domain_controllers']
+  register: join_domain
+
+- name: Set DNS to primary Domain Controller for setup of Secondary Domain Controllers
+  ansible.windows.win_dns_client:
+    adapter_names:
+      - Ethernet
+    ipv4_addresses: "{{ groups['primary_domain_controllers'] | map('extract', hostvars) | selectattr('domain', 'equalto', domain) | map(attribute='ansible_host') | first }}"
+  when:
+    - join_domain.changed
+    - inventory_hostname in groups['secondary_domain_controllers']
+
+- name: Configure Domain Controllers
+  microsoft.ad.domain_controller:
+    dns_domain_name: ="{{ domain }}"
+    domain_admin_user: "{{ domain_admin_username }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+    safe_mode_password: "{{ domain_dsrm }}"
+    state: domain_controller
+    install_dns: True
+    reboot: True
+
+- name: Configure DNS on Secondary Domain Controllers
+  ansible.windows.win_dns_client:
+    adapter_names:
+      - Ethernet
+    ipv4_addresses: "{{ dc_ips }}"
+  when:
+    - join_domain.changed
+    - inventory_hostname in groups['secondary_domain_controllers']
+...

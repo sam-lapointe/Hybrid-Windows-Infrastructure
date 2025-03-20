@@ -1,0 +1,34 @@
+---
+- name: Verify if the domain is already created
+  microsoft.ad.membership:
+    dns_domain_name: "{{ domain }}"
+    domain_admin_user: "{{ domain_admin_username }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+    state: domain
+  check_mode: true
+  register: is_domain_joined
+
+- name: Change Administrator Password
+  ansible.windows.win_user:
+    name: "{{  (lookup('env', 'DEFAULT_WIN_USERNAME')) }}"
+    password: "{{ domain_admin_password }}"
+    state: present
+    groups:
+      - Administrators
+  when: is_domain_joined.changed == true
+
+- name: Rename Hostname
+  ansible.windows.win_hostname:
+    name: "{{ inventory_hostname }}"
+  register: res
+
+- name: Reboot
+  ansible.windows.win_reboot:
+  when: res.reboot_required
+
+- name: Create AD Forest and Domain
+  microsoft.ad.domain:
+    dns_domain_name: "{{ domain }}"
+    safe_mode_password: "{{ domain_dsrm }}"
+    reboot: true
+...

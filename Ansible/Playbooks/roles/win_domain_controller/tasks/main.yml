@@ -1,2 +1,12 @@
 ---
 # tasks file for win_domain_controller
+- name: Create forest with Primary Domain Controller
+  ansible.builtin.include_tasks: create_forest.yml
+  when: inventory_hostname in groups['primary_domain_controllers']
+
+- name: Configure Domain
+  ansible.builtin.include_tasks: configure_domain.yml
+  when: inventory_hostname in groups['primary_domain_controllers']
+
+- name: Configure Domain Controllers
+  ansible.builtin.include_tasks: configure_domain_controller.yml

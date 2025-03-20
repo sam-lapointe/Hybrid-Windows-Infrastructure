@@ -93,19 +93,37 @@
         - firewall
         - rdp
 
+- name: Install all updates and reboot as many times as needed
+  ansible.windows.win_updates:
+    category_names:
+      - '*'
+    reboot: true
+  when: setup == true
+
 - name: Store domain controller IPs in a list
   ansible.builtin.set_fact:
     dc_ips: >-
       {{
         (['127.0.0.1'] +
-        (groups['domain_controllers']
-          | map('extract', hostvars, ['ansible_host'])
+        ((groups['primary_domain_controllers'] | default([]))
+          | union(groups['secondary_domain_controllers'] | default([]))
+          | map('extract', hostvars)
+          | selectattr('domain', 'equalto', hostvars[inventory_hostname].domain)
+          | map(attribute='ansible_host')
           | reject('equalto', ansible_host)
           | list)
         )
       }}
-    member_ips: "{{ groups['domain_controllers'] | map('extract', hostvars, ['ansible_host']) | list }}"
-  register: dns_list
+    member_ips: >- 
+      {{ 
+        (groups['primary_domain_controllers'] | default([]))
+          | union(groups['secondary_domain_controllers'] | default([])) 
+          | map('extract', hostvars)
+          | selectattr('domain', 'equalto', hostvars[inventory_hostname].domain)
+          | map(attribute='ansible_host')
+          | list
+      }}
+    cacheable: true
   tags:
     - dns
 
@@ -129,7 +147,7 @@
     - dns
   when:
     - dns_configured.changed
-    - inventory_hostname in groups['domain_controllers']
+    - inventory_hostname in groups['primary_domain_controllers'] or inventory_hostname in groups['secondary_domain_controllers']
 
 - name: Configure DNS on Domain Members
   ansible.windows.win_dns_client:
@@ -140,7 +158,8 @@
     - dns
   when:
     - dns_configured.changed
-    - inventory_hostname not in groups['domain_controllers']
+    - inventory_hostname not in groups['primary_domain_controllers']
+    - inventory_hostname not in groups['secondary_domain_controllers']
 
 - name: Set Time Zone to Eastern Standard Time
   community.windows.win_timezone:
@@ -150,13 +169,15 @@
 
 - name: Join host to domain and change hostname
   microsoft.ad.membership:
-    dns_domain_name: lab.local
+    dns_domain_name: "{{ domain }}"
     hostname: "{{ inventory_hostname }}"
     domain_admin_user: "{{ domain_admin_username }}"
     domain_admin_password: "{{ domain_admin_password }}"
-    domain_ou_path: "OU=Computers,OU=ProxmoxBCDR,DC=lab,DC=local"
     state: domain
     reboot: True
-  when: inventory_hostname not in groups['domain_controllers']
+  when: 
+    - inventory_hostname not in groups['primary_domain_controllers']
+    - inventory_hostname not in groups['secondary_domain_controllers']
   tags:
     - join_domain
+...
