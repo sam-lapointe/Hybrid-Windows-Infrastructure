@@ -68,6 +68,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y ansible
+        ansible-galaxy collection install microsoft.ad
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
