@@ -1,2 +1,55 @@
 ---
 # vars file for win_domain_controller
+
+# Domains with the list of OUs and Sub OUs.
+slapointe: 
+  - ou: IT
+    sub_ou:
+      - Users:
+        - identity: bsmith
+          firstname: Bob
+          surname: Smith
+          password: P4assw0rd
+          groups:
+            - IT_MOD
+        - identity: jdoe
+          firstname: Jane
+          surname: Doe
+          password: P4assw0rd
+          groups:
+            - IT_RO
+      - Groups:
+         - name: IT_MOD
+           description: "Access to IT share in modification."
+         - name: IT_RO
+           description: "Access to IT share in read-only."
+      - Computers
+  - ou: HR
+    sub_ou:
+      - Users: 
+        - identity: proger
+          firstname: Peter
+          surname: Roger
+          password: P4assw0rd
+          groups:
+            - HR_MOD
+            - HR_RO
+      - Groups:
+        - name: HR_MOD
+          description: "Access to HR share in modification."
+        - name: HR_RO
+          description: "Access to HR share in read-only."
+      - Computers
+  - ou: Servers
+lab:
+  - ou: IT
+    sub_ou:
+      - Users
+      - Groups
+      - Computers
+  - ou: Research
+    sub_ou:
+      - Users
+      - Groups
+      - Computers
+  - ou: Servers

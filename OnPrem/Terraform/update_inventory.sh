@@ -6,6 +6,8 @@ for vm in $(echo "$vms_status" | jq -r '.[] | @base64'); do
   name=$(_jq '.name')
   action=$(_jq '.actions[0]')
   if [ "$name" != "null" ] && [ "$action" == "create" ]; then
-    sed -i "/$name/ s/$/ status=new/" ./inventory
+    sed -i "/$name/ s/$/ new=true/" ./inventory
+  else
+    sed -i "/$name/ s/$/ new=false/" ./inventory
   fi
 done

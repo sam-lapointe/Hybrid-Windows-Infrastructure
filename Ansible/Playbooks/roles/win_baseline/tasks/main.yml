@@ -93,12 +93,13 @@
         - firewall
         - rdp
 
-- name: Install all updates and reboot as many times as needed
-  ansible.windows.win_updates:
-    category_names:
-      - '*'
-    reboot: true
-  when: setup == true
+## It is currently disabled since it is taking too much time.
+# - name: Install all updates and reboot as many times as needed
+#   ansible.windows.win_updates:
+#     category_names:
+#       - '*'
+#     reboot: true
+#   when: setup == true
 
 - name: Store domain controller IPs in a list
   ansible.builtin.set_fact:
@@ -173,6 +174,7 @@
     hostname: "{{ inventory_hostname }}"
     domain_admin_user: "{{ domain_admin_username }}"
     domain_admin_password: "{{ domain_admin_password }}"
+    domain_ou_path: "OU=Servers,DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
     state: domain
     reboot: True
   when: 

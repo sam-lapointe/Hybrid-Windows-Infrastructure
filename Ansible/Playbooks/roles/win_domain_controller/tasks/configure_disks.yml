@@ -1,0 +1,28 @@
+---
+- name: Get disk facts
+  community.windows.win_disk_facts:
+
+- name: Initialize disks
+  community.windows.win_initialize_disk:
+    disk_number: "{{ item.number }}"
+  when:
+    - item.partition_style == "RAW"
+  loop: "{{ ansible_facts.disks }}"
+  loop_control:
+    label: "{{ item.unique_id }}"
+
+- name: Partition disks
+  community.windows.win_partition:
+    drive_letter: "{{ item.letter }}"
+    disk_number: "{{ item.number }}"
+    partition_size: -1
+  loop:
+    - {letter: "D", number: 1}
+
+- name: Format disks
+  community.windows.win_format:
+    drive_letter: "{{ item.letter }}"
+    file_system: "ntfs"
+    new_label: "{{ item.label }}"
+  loop:
+    - {letter: "D", label: "NTDS"}

@@ -142,7 +142,6 @@ jobs:
       run: |
         ./update_inventory.sh
 
-    - name: Test Inventory
-      run: |
-        ls
-        cat ./inventory
+    - name: Run Ansible Playbook
+      id: Ansible
+      run: ansible-playbook ../../Ansible/Playbooks/main.yml

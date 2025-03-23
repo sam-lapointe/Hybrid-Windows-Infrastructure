@@ -1,0 +1,42 @@
+- name: Gather all groups
+  ansible.builtin.set_fact:
+    all_groups: "{{ all_groups | default([]) + item.sub_ou[1].Groups | default([]) | map('combine', {'path': item.ou}) }}"
+  loop: "{{ vars[domain.split('.')[0]] }}"
+  when: item.sub_ou is defined and item.sub_ou[1].Groups is defined
+
+- name: Gather all users
+  ansible.builtin.set_fact:
+    all_users: "{{ all_users | default([]) + item.sub_ou[0].Users | default([]) | map('combine', {'path': item.ou}) }}"
+  loop: "{{ vars[domain.split('.')[0]] }}"
+  when: item.sub_ou is defined and item.sub_ou[0].Users is defined
+
+- name: Create AD Groups
+  microsoft.ad.group:
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    scope: global
+    path: "OU=Groups,OU={{ item.path }},DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
+    state: present
+  loop: "{{ all_groups }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: all_groups is defined
+
+- name: Create AD Users
+  microsoft.ad.user:
+    identity: "{{ item.identity }}"
+    display_name: "{{ item.firstname }} {{ item.surname }}"
+    name: "{{ item.firstname }} {{ item.surname }}"
+    firstname: "{{ item.firstname }}"
+    surname: "{{ item.surname }}"
+    upn: "{{ item.identity }}@{{ domain }}"
+    password: "{{ item.password }}"
+    update_password: on_create
+    groups:
+      add: "{{ item.groups }}"
+    state: present
+    path: "OU=Users,OU={{ item.path }},DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
+  loop: "{{ all_users }}"
+  loop_control:
+    label: "{{ item.identity }}"
+  when: all_users is defined

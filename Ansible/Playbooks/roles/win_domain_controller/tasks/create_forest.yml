@@ -30,5 +30,8 @@
   microsoft.ad.domain:
     dns_domain_name: "{{ domain }}"
     safe_mode_password: "{{ domain_dsrm }}"
+    database_path: "D:\\NTDS"
+    log_path: "D:\\LOG"
+    sysvol_path: "D:\\SYSVOL"
     reboot: true
 ...

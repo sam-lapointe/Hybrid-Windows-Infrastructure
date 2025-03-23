@@ -22,9 +22,12 @@
 
 - name: Configure Domain Controllers
   microsoft.ad.domain_controller:
-    dns_domain_name: ="{{ domain }}"
+    dns_domain_name: "{{ domain }}"
     domain_admin_user: "{{ domain_admin_username }}"
     domain_admin_password: "{{ domain_admin_password }}"
+    database_path: "D:\\NTDS"
+    domain_log_path: "D:\\LOG"
+    sysvol_path: "D:\\SYSVOL"
     safe_mode_password: "{{ domain_dsrm }}"
     state: domain_controller
     install_dns: True
@@ -38,4 +41,10 @@
   when:
     - join_domain.changed
     - inventory_hostname in groups['secondary_domain_controllers']
+
+- name: Install Group Policy Management
+  ansible.windows.win_feature:
+    name:
+      - GPMC
+    state: present
 ...

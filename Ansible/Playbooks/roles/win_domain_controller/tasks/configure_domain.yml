@@ -1,15 +1,23 @@
 ---
-# TO DO: Setup the OUs for each domain and adjust the path for LAPS and the GPO.
-- name: Create ProxmoxBCDR OU
+- name: Create Organizational Units
   microsoft.ad.ou:
-    name: ProxmoxBCDR
+    name: "{{ item.ou }}"
+    path: "DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
     state: present
+  loop: "{{ vars[domain.split('.')[0]] }}"
+  loop_control:
+    label: "OU={{ item.ou }}"
+  register: organizational_units
 
-- name: Create Computers OU in ProxmoxBCDR
+- name: Create Sub Organizational Units
   microsoft.ad.ou:
-    name: Computers
-    path: OU=ProxmoxBCDR,DC=lab,DC=local
+    name: "{{ item.1.keys() | first if item.1 is mapping else item.1 }}"
+    path: "OU={{ item.0.ou }},DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
     state: present
+  loop: "{{ query('subelements', vars[domain.split('.')[0]], 'sub_ou', {'skip_missing': true}) }}"
+  loop_control:
+    label: "OU={{ item.1.keys() | first if item.1 is mapping else item.1 }},OU={{ item.0.ou }}"
+  register: sub_organizational_units
 
 - name: Verify if AD Recycle Bin is enabled
   vars:
@@ -21,7 +29,7 @@
   changed_when: (is_adbin_enabled.stdout | trim) == "False"
 
 - name: Enable AD Recycle Bin if not enabled
-  ansible.windows.win_shell: Enable-AdOptionalFeature 'Recycle Bin Feature' -Scope ForestOrConfigurationSet -Target lab.local -Confirm:$false
+  ansible.windows.win_shell: Enable-AdOptionalFeature 'Recycle Bin Feature' -Scope ForestOrConfigurationSet -Target '{{ domain }}'  -Confirm:$false
   when: is_adbin_enabled.changed
 
 - name: Verify if LAPS schema is present
@@ -33,20 +41,33 @@
   register: is_laps_schema_present
   changed_when: (is_laps_schema_present.stdout | trim) == "False"
 
-- name: Update Laps AD Schema and Set Computer Self Permission
+- name: Update Laps AD Schema
   ansible.windows.win_shell: |
     Update-LapsADSchema -Confirm:$false
-    Set-LapsADComputerSelfPermission -Identity "OU=Computers,OU=ProxmoxBCDR,DC=lab,DC=local"
-  become: True
-  become_method: runas
-  become_user: Administrator
   when: is_laps_schema_present.changed
+
+- name: Set Computer Self Permission on Servers Organization Units for LAPS
+  ansible.windows.win_shell: |
+    Set-LapsADComputerSelfPermission -Identity "OU={{ item.ou }},DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
+  when: 
+    - organizational_units.changed
+  loop: "{{ vars[domain.split('.')[0]] | selectattr('ou', 'equalto', 'Servers') }}"
+  loop_control:
+    label: "OU={{ item.ou }}"
+
+- name: Set Computer Self Permission on Sub Organizational Units for Laps
+  ansible.windows.win_shell: |
+    Set-LapsADComputerSelfPermission -Identity "OU={{ item.1.keys() | first if item.1 is mapping else item.1 }},OU={{ item.0.ou }},DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
+  when: sub_organizational_units.changed
+  loop: "{{ query('subelements', vars[domain.split('.')[0]], 'sub_ou', {'skip_missing': true}) | selectattr('1', 'equalto', 'Computers') | list }}"
+  loop_control:
+    label: "OU={{ item.1.keys() | first if item.1 is mapping else item.1 }},OU={{ item.0.ou }}"
 
 - name: Create the GPO for LAPS
   vars:
     create_gpo: |
       $gpo_name = "LAPS"
-      $ou = "OU=Computers,OU=ProxmoxBCDR,DC=lab,DC=local"
+      $ou = "DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
       if (-not (Get-GPO -Name $gpo_name -ErrorAction SilentlyContinue)) {
           New-GPO -Name $gpo_name | Out-Null
           New-GPLink -Name $gpo_name -Target $ou -LinkEnabled Yes | Out-Null

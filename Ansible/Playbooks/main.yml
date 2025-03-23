@@ -30,6 +30,8 @@
         domain: "{{ item.domain }}"
         groups: new_domain_controllers
       loop: "{{ new_dcs }}"
+      loop_control:
+        label: "{{ item.inventory_hostname }}"
       changed_when: false
 
     - name: Add members with new=true to a dynamic group
@@ -39,6 +41,8 @@
         domain: "{{ item.domain }}"
         groups: new_members
       loop: "{{ new_members }}"
+      loop_control:
+        label: "{{ item.inventory_hostname }}"
       changed_when: false
 
 - name: Set domain credentials dynamically
@@ -90,8 +94,10 @@
     - win_domain_controller
 
 - name: Configure Existing Domain Controllers
-  hosts: primary_domain_controllers,secondary_domain_controllers
+  hosts: primary_domain_controllers:secondary_domain_controllers:!new_domain_controllers
   gather_facts: false
+  vars:
+    setup: false
   roles:
     - win_baseline
     - win_domain_controller
@@ -99,12 +105,16 @@
 - name: Setup New Members
   hosts: new_members
   gather_facts: false
+  vars:
+    setup: true
   roles:
     - win_baseline
 
 - name: Configure Existing Members
   hosts: windows:!primary_domain_controllers:!secondary_domain_controllers:!new_members
   gather_facts: false
+  vars:
+    setup: false
   roles:
     - win_baseline
   
