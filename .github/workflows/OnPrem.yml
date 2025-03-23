@@ -23,6 +23,14 @@ env:
   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
   TF_VAR_PROXMOX_USERNAME: ${{ secrets.TF_VAR_PROXMOX_USERNAME }}
   TF_VAR_PROXMOX_PASSWORD: ${{ secrets.TF_VAR_PROXMOX_PASSWORD }}
+  DEFAULT_WIN_USERNAME: ${{ secrets.DEFAULT_WIN_USERNAME }}
+  DEFAULT_WIN_PASSWORD: ${{ secrets.DEFAULT_WIN_PASSWORD }}
+  SLAPOINTE_DOM_ADMIN_USERNAME: ${{ secrets.SLAPOINTE_DOM_ADMIN_USERNAME }}
+  SLAPOINTE_DOM_ADMIN_PASSWORD: ${{ secrets.SLAPOINTE_DOM_ADMIN_PASSWORD }}
+  SLAPOINTE_DSRM: ${{ secrets.SLAPOINTE_DSRM }}
+  LAB_DOM_ADMIN_USERNAME: ${{ secrets.LAB_DOM_ADMIN_USERNAME }}
+  LAB_DOM_ADMIN_PASSWORD: ${{ secrets.LAB_DOM_ADMIN_PASSWORD }}
+  LAB_DSRM: ${{ secrets.LAB_DSRM }}
 
 jobs:
   terraform:
@@ -144,4 +152,6 @@ jobs:
 
     - name: Run Ansible Playbook
       id: Ansible
-      run: ansible-playbook ../../Ansible/Playbooks/main.yml
+      run: |
+        cd ../../Ansible/Playbooks
+        ansible-playbook main.yml
