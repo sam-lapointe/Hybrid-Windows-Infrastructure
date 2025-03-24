@@ -32,6 +32,7 @@ locals {
     module.win-dc1-f1,
     module.win-dc1-f2,
     module.win-wac,
+    module.win-fs,
     module.win-entra-sync1
   ]
   ubuntu_vm_modules = []
@@ -95,6 +96,20 @@ module "win-wac" {
   memory              = 4096
 }
 
+module "win-fs" {
+  source = "./Modules/windows-vm"
+
+  # Input Variables
+  hostname            = "fs1"
+  description         = "Windows File Server - Managed by Terraform"
+  domain              = "slapointe.com"
+  additional_vm_tags  = ["fs", "core"]
+  windows_template_id = 101
+  proxmox_node        = "node-01"
+  cpu                 = 2
+  memory              = 4096
+}
+
 module "win-entra-sync1" {
   source = "./Modules/windows-vm"
 
@@ -125,4 +140,3 @@ resource "local_file" "hosts_cfg" {
 output "all_vm_info" {
   value = local.all_vms
 }
-# Complete Debug 2

@@ -158,6 +158,7 @@ jobs:
     - name: Adjust Ansible Inventory
       run: |
         ./update_inventory.sh
+        cat inventory
 
     - name: Setup SSH Key
       run: |

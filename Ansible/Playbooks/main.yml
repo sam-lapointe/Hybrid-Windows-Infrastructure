@@ -73,7 +73,7 @@
   tasks:
     - name: Set ansible_user based on domain
       set_fact:
-        ansible_user: "{{ domain_admin_username }}"
+        ansible_user: "{{ domain }}\\{{ domain_admin_username.split('@')[0] }}"
 
 - name: Set ansible_user and ansible_password for new servers
   hosts: new_domain_controllers,new_members

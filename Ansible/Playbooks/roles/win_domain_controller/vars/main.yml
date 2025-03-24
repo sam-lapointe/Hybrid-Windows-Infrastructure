@@ -6,13 +6,13 @@ slapointe:
   - ou: IT
     sub_ou:
       - Users:
-        - identity: bsmith
+        - username: bsmith
           firstname: Bob
           surname: Smith
           password: P4assw0rd
           groups:
             - IT_MOD
-        - identity: jdoe
+        - username: jdoe
           firstname: Jane
           surname: Doe
           password: P4assw0rd
@@ -27,7 +27,7 @@ slapointe:
   - ou: HR
     sub_ou:
       - Users: 
-        - identity: proger
+        - username: proger
           firstname: Peter
           surname: Roger
           password: P4assw0rd

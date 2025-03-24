@@ -24,12 +24,12 @@
 
 - name: Create AD Users
   microsoft.ad.user:
-    identity: "{{ item.identity }}"
+    identity: "{{ item.username}}@{{ domain }}"
     display_name: "{{ item.firstname }} {{ item.surname }}"
     name: "{{ item.firstname }} {{ item.surname }}"
     firstname: "{{ item.firstname }}"
     surname: "{{ item.surname }}"
-    upn: "{{ item.identity }}@{{ domain }}"
+    upn: "{{ item.username }}@{{ domain }}"
     password: "{{ item.password }}"
     update_password: on_create
     groups:
@@ -38,5 +38,5 @@
     path: "OU=Users,OU={{ item.path }},DC={{ domain.split('.')[0] }},DC={{ domain.split('.')[1] }}"
   loop: "{{ all_users }}"
   loop_control:
-    label: "{{ item.identity }}"
+    label: "{{ item.username }}@{{ domain }}"
   when: all_users is defined

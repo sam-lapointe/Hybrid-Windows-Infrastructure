@@ -1,2 +1,24 @@
 ---
 # tasks file for win_admin_center
+- name: Verify if Windows Admin Center is installed
+  vars:
+    check_script: |
+      $wac_service = Get-Service -Name WindowsAdminCenter -ErrorAction SilentlyContinue
+      $wac_service
+  ansible.windows.win_shell: "{{ check_script }}"
+  register: wac_configured
+  changed_when: (wac_configured.stdout | from_json)
+
+- name: Debug WAC Service
+  ansible.builtin.debug:
+    msg: "{{ wac_configured.stdout }}"
+
+- name: Install Windows Admin Center
+  vars:
+    install_script: |
+      $parameters = @{Source = "https://aka.ms/WACdownload"; Destination = ".\WindowsAdminCenter.exe"}
+      Start-BitsTransfer @parameters
+      Start-Process -FilePath '.\WindowsAdminCenter.exe' -ArgumentList '/VERYSILENT' -Wait
+      Start-Service -Name WindowsAdminCenter
+  ansible.windows.win_shell: "{{ install_script }}"
+  when: wac_configured.changed
