@@ -1,5 +1,5 @@
-# Hybrid-Windows-Infrastructure
-Project to apply what I learned while preparing for the AZ-800 certification (Administering Windows Server Hybrid Core Infrastructure).
+# Windows Terraform Ansible
+Project to apply what I learned while preparing for the AZ-800 certification (Administering Windows Server Hybrid Core Infrastructure) and practice with Terraform and Ansible.
 
 ## Setting up Terraform backend in Azure
 
