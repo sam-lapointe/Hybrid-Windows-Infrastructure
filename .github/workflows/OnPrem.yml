@@ -68,9 +68,11 @@ jobs:
     - name: Install Ansible
       run: |
         sudo apt update
-        sudo apt install -y ansible-core
+        sudo apt install -y ansible
         ansible --version
         ansible-galaxy collection install microsoft.ad
+        ansible-galaxy collection install community.windows
+        ansible-galaxy collection install ansible.windows
         ansible-galaxy collection list
 
     - name: Setup Terraform
