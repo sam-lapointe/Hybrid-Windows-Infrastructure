@@ -125,4 +125,3 @@ resource "local_file" "hosts_cfg" {
 output "all_vm_info" {
   value = local.all_vms
 }
-#Test

@@ -146,20 +146,18 @@ jobs:
       id: apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false -parallelism=3
-
-    - name: Test PWD
-      run: pwd
     
-    - name: Setup SSH Key
-      run: |
-        mkdir .ssh
-        echo "$SSH_PRIVATE_KEY" > ./.ssh/private.key
-        sudo chmod 600 ./.ssh/private.key
-    
-    # Add the status=new to each new hosts in the inventory file
+    # Add new=true to each new hosts and new=false to existing hosts in the inventory file
     - name: Adjust Ansible Inventory
       run: |
         ./update_inventory.sh
+
+    - name: Setup SSH Key
+      run: |
+        cd ../../Ansible/Playbooks
+        mkdir .ssh
+        echo "$SSH_PRIVATE_KEY" > ./.ssh/private.key
+        sudo chmod 600 ./.ssh/private.key
 
     - name: Run Ansible Playbook
       id: Ansible
