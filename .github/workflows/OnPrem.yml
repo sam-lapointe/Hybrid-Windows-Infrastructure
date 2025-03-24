@@ -71,6 +71,8 @@ jobs:
         sudo apt install -y ansible-core
         ansible --version
         ansible-galaxy collection install microsoft.ad
+        ansible-galaxy collection install community.windows
+        ansible-galaxy collection install ansible.windows
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
