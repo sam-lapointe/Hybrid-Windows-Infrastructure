@@ -6,11 +6,13 @@ on:
     - main
     paths:
     - OnPrem/Terraform/**
+    - Ansible/Playbookd/**
   pull_request:
     branches:
     - main
     paths:
     - OnPrem/Terraform/**
+    - Ansible/Playbookd/**
 
 permissions:
   pull-requests: write
