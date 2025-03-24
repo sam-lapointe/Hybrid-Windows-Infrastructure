@@ -68,7 +68,7 @@ jobs:
     - name: Install Ansible
       run: |
         sudo apt update
-        sudo apt install -y ansible
+        sudo apt install -y ansible-core
         ansible --version
         ansible-galaxy collection install microsoft.ad
 
@@ -164,4 +164,5 @@ jobs:
       id: Ansible
       run: |
         cd ../../Ansible/Playbooks
+        ls -la
         ansible-playbook main.yml
