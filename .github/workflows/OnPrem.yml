@@ -170,4 +170,5 @@ jobs:
       id: Ansible
       run: |
         cd ../../Ansible/Playbooks
+        sleep 60
         ansible-playbook main.yml
