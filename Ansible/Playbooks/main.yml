@@ -117,4 +117,12 @@
     setup: false
   roles:
     - win_baseline
+
+- name: Setup Windows Admin Center
+  hosts: windows_admin_center
+  gather_facts: false
+  vars:
+    ansible_user: "{{ domain }}\\{{ domain_admin_username.split('@')[0] }}"
+  roles:
+    - win_admin_center
   

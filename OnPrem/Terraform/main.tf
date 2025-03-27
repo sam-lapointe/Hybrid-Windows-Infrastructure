@@ -20,7 +20,7 @@ terraform {
 }
 
 provider "proxmox" {
-  endpoint = "https://192.168.0.11:8006/"
+  endpoint = "https://192.168.25.11:8006/"
   username = var.PROXMOX_USERNAME
   password = var.PROXMOX_PASSWORD
   insecure = true
@@ -32,7 +32,8 @@ locals {
     module.win-dc1-f1,
     module.win-dc1-f2,
     module.win-wac,
-    module.win-fs,
+    module.win-fs1,
+    module.win-fs2,
     module.win-entra-sync1
   ]
   ubuntu_vm_modules = []
@@ -96,7 +97,7 @@ module "win-wac" {
   memory              = 4096
 }
 
-module "win-fs" {
+module "win-fs1" {
   source = "./Modules/windows-vm"
 
   # Input Variables
@@ -108,6 +109,32 @@ module "win-fs" {
   proxmox_node        = "node-01"
   cpu                 = 2
   memory              = 4096
+  disks = [{
+    datastore_id = "DataStorage-01"
+    interface    = "scsi1"
+    file_format  = "raw"
+    size         = 64
+  }]
+}
+
+module "win-fs2" {
+  source = "./Modules/windows-vm"
+
+  # Input Variables
+  hostname            = "fs2"
+  description         = "Windows File Server - Managed by Terraform"
+  domain              = "slapointe.com"
+  additional_vm_tags  = ["fs", "desktop"]
+  windows_template_id = 100
+  proxmox_node        = "node-01"
+  cpu                 = 2
+  memory              = 4096
+  disks = [{
+    datastore_id = "DataStorage-01"
+    interface    = "scsi1"
+    file_format  = "raw"
+    size         = 64
+  }]
 }
 
 module "win-entra-sync1" {
