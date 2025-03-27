@@ -77,7 +77,7 @@ resource "azurerm_storage_account" "storage_statefile" {
     }
 }
 
-# Create the container.
+# Create the storage container.
 resource "azurerm_storage_container" "storage_statefile" {
     name = var.container_name
     storage_account_id = azurerm_storage_account.storage_statefile.id
