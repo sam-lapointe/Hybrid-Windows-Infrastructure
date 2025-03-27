@@ -9,7 +9,7 @@
   register: wac_configured
   changed_when: (wac_configured.stdout == "")
 
-- name: Install Windows Admin Center
+- name: Download and Install Windows Admin Center
   vars:
     install_script: |
       Invoke-WebRequest https://aka.ms/WACdownload -OutFile .\WindowsAdminCenter.exe
