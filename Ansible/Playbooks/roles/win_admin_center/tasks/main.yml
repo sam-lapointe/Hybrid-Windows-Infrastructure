@@ -9,10 +9,6 @@
   register: wac_configured
   changed_when: (wac_configured.stdout == "")
 
-- name: Debug WAC Service
-  ansible.builtin.debug:
-    msg: "{{ wac_configured.stdout }}"
-
 - name: Install Windows Admin Center
   vars:
     install_script: |
