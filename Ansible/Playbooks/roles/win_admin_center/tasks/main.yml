@@ -1,6 +1,6 @@
 ---
 # tasks file for win_admin_center
-- name: Verify if Windows Admin Center is installed
+- name: Verify if Windows Admin Center Service is installed
   vars:
     check_script: |
       $wac_service = Get-Service -Name WindowsAdminCenter -ErrorAction SilentlyContinue
